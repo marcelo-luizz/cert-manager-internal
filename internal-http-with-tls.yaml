@@ -1,0 +1,30 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: proxmox-vm-entry
+  namespace: istio-system
+spec:
+  hosts:
+  - proxmox-vm.istio-system.svc.cluster.local
+  addresses:
+  - 192.168.18.203/32
+  ports:
+  - number: 8006
+    name: https-proxmox
+    protocol: HTTPS # Força o Istio a usar TLS ao sair do cluster
+  location: MESH_EXTERNAL
+  resolution: STATIC
+  endpoints:
+  - address: 192.168.18.203
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: disable-mtls-proxmox
+  namespace: istio-system
+spec:
+  host: proxmox-vm.istio-system.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: SIMPLE # Origina uma conexão TLS para a VM
+      insecureSkipVerify: true # Essencial para o certificado autoassinado do PVE
